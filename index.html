@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js" defer>
+    </script>
+
+    <style>
+        /* ----------------------------------------------
+                   RESET & BASE
+                ------------------------------------------------ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* fallback font if Inter not loaded */
+        @supports (font-variation-settings: normal) {
+            body {
+                font-family: 'Inter var', sans-serif;
+            }
+        }
+
+        /* ----------------------------------------------
+                   APP CONTAINER
+                ------------------------------------------------ */
+        [x-data="app()"] {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 32px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.2s ease;
+        }
+
+        @media (max-width: 640px) {
+            [x-data="app()"] {
+                padding: 20px 16px;
+                border-radius: 20px;
+            }
+
+            body {
+                padding: 12px;
+            }
+        }
+
+        /* ----------------------------------------------
+                   HEADER / PAGE TITLE
+                ------------------------------------------------ */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e9edf2;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: #0b1e33;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-header h1 small {
+            font-size: 16px;
+            font-weight: 400;
+            color: #64748b;
+            letter-spacing: 0;
+        }
+
+        .page-header .badge-toko {
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ----------------------------------------------
+                   BUTTONS
+                ------------------------------------------------ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.4;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            background: #f1f5f9;
+            color: #1e293b;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn:active {
+            transform: translateY(0px);
+        }
+
+        .btn-primary {
+            background: #1e293b;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #0f172a;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-blue:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-outline:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: #475569;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .btn-back:hover {
+            background: #f1f5f9;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ----------------------------------------------
+                   TOKO CARDS (grid)
+                ------------------------------------------------ */
+        .toko-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        .toko-card {
+            background: #fafcff;
+            border: 1px solid #eef2f6;
+            border-radius: 20px;
+            padding: 24px 22px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .toko-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.06);
+            transform: translateY(-4px);
+        }
+
+        .toko-card .nama-toko {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0b1e33;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .toko-card .detail-row {
+            display: flex;
+            font-size: 14px;
+            color: #475569;
+            padding: 4px 0;
+            gap: 6px;
+            align-items: baseline;
+        }
+
+        .toko-card .detail-row .label {
+            font-weight: 500;
+            color: #64748b;
+            min-width: 62px;
+        }
+
+        .toko-card .detail-row .value {
+            color: #0f172a;
+            word-break: break-word;
+        }
+
+        .toko-card .btn-wrap {
+            margin-top: 18px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .toko-card .btn-wrap .btn {
+            font-size: 13px;
+            padding: 8px 20px;
+        }
+
+        /* ----------------------------------------------
+                   PRODUK GRID
+                ------------------------------------------------ */
+        .produk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 12px;
+        }
+
+        .produk-card {
+            background: #ffffff;
+            border: 1px solid #edf1f7;
+            border-radius: 20px;
+            padding: 20px 18px 20px 18px;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+        }
+
+        .produk-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.07);
+            transform: translateY(-4px);
+        }
+
+        .produk-card .gambar-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 14px;
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 8px 0;
+        }
+
+        .produk-card .gambar-wrap img {
+            width: 100%;
+            max-width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid #e9edf2;
+        }
+
+        .produk-card .nama-produk {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0b1e33;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+        }
+
+        .produk-card .meta {
+            width: 100%;
+            font-size: 13.5px;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-bottom: 14px;
+        }
+
+        .produk-card .meta .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .produk-card .meta .row .label-meta {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .produk-card .meta .row .value-meta {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .produk-card .btn-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: auto;
+        }
+
+        .produk-card .btn-wrap .btn {
+            font-size: 12.5px;
+            padding: 7px 18px;
+        }
+
+        .produk-card .stok-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 100px;
+            margin-top: 2px;
+        }
+
+        .produk-card .stok-badge.rendah {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* ----------------------------------------------
+                   LOADING & EMPTY STATES
+                ------------------------------------------------ */
+        .state-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            color: #64748b;
+            background: #fafcff;
+            border-radius: 24px;
+            border: 1px dashed #dce2ec;
+        }
+
+        .state-box .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .state-box h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .state-box p {
+            font-size: 14px;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ----------------------------------------------
+                   FORM EDIT PRODUK
+                ------------------------------------------------ */
+        .form-edit {
+            max-width: 560px;
+            margin: 0 auto;
+            background: #fafcff;
+            padding: 32px 32px 24px;
+            border-radius: 24px;
+            border: 1px solid #eef2f6;
+        }
+
+        .form-edit .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-edit label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .form-edit label .optional {
+            font-weight: 400;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .form-edit input[type="text"],
+        .form-edit input[type="number"],
+        .form-edit input[type="file"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
+            background: #ffffff;
+            transition: border 0.2s ease;
+            color: #0f172a;
+        }
+
+        .form-edit input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }
+
+        .form-edit input[type="file"] {
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-style: dashed;
+            cursor: pointer;
+        }
+
+        .form-edit input[type="file"]:hover {
+            background: #f1f5f9;
+        }
+
+        .form-edit .preview-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0 14px 0;
+        }
+
+        .form-edit .preview-wrap img {
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            object-fit: cover;
+            width: 150px;
+            height: 150px;
+            background: #f8fafc;
+        }
+
+        .form-edit .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+
+        .form-edit .btn-group .btn {
+            flex: 1 1 auto;
+            justify-content: center;
+            padding: 12px 20px;
+            font-size: 15px;
+        }
+
+        .form-edit .alert {
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .form-edit .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .form-edit .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* ----------------------------------------------
+                   BACK BUTTON + INFO BAR
+                ------------------------------------------------ */
+        .back-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #edf1f7;
+        }
+
+        .back-bar .toko-info {
+            font-size: 15px;
+            color: #334155;
+            background: #f8fafc;
+            padding: 6px 18px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-bar .toko-info strong {
+            color: #0f172a;
+        }
+
+        /* ----------------------------------------------
+                   RESPONSIVE TWEAKS
+                ------------------------------------------------ */
+        @media (max-width: 640px) {
+            .toko-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .produk-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 22px;
+            }
+
+            .form-edit {
+                padding: 20px 16px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .produk-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ----------------------------------------------
+                   UTILITY
+                ------------------------------------------------ */
+        .mt-2 {
+            margin-top: 10px;
+        }
+
+        .mb-2 {
+            margin-bottom: 10px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .gap-2 {
+            gap: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div x-data="app()" x-init="init()">
+
+        <!-- ============================================= -->
+        <!-- HALAMAN TOKO                                  -->
+        <!-- ============================================= -->
+        <div x-show="currentPage === 'toko'">
+
+            <div class="page-header">
+                <h1>
+                    🏪 Daftar Toko
+                    <small>kelola semua toko</small>
+                </h1>
+                <span class="badge-toko" x-text="tokoList.length + ' toko'"></span>
+            </div>
+
+            <!-- LOADING -->
+            <div x-show="loading" class="state-box">
+                <div class="spinner"></div>
+                <h3>Memuat data toko…</h3>
+                <p>Mohon tunggu sebentar.</p>
+            </div>
+
+            <!-- ERROR -->
+            <div x-show="error" class="form-edit alert alert-error" style="max-width:100%;">
+                <p x-text="error"></p>
+            </div>
+
+            <!-- DATA -->
+            <div x-show="!loading && !error">
+                <div x-show="tokoList.length === 0" class="state-box">
+                    <div class="icon">📭</div>
+                    <h3>Belum ada toko</h3>
+                    <p>Tambahkan toko pertama Anda untuk mulai mengelola produk.</p>
+                </div>
+
+                <div x-show="tokoList.length > 0" class="toko-grid">
+                    <template x-for="toko in tokoList" :key="toko.id">
+                        <div class="toko-card">
+                            <div class="nama-toko" x-text="toko.nama_toko"></div>
+                            <div class="detail-row">
+                                <span class="label">📍 Alamat</span>
+                                <span class="value" x-text="toko.alamat || '—'"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">👤 Pemilik</span>
+                                <span class="value" x-text="toko.pemilik || '—'"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">📞 Telepon</span>
+                                <span class="value" x-text="toko.telepon || '—'"></span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">✉️ Email</span>
+                                <span class="value" x-text="toko.email || '—'"></span>
+                            </div>
+                            <div class="btn-wrap">
+                                <button class="btn btn-blue" @click="keProduk(toko.id)">
+                                    📦 Lihat Produk
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- HALAMAN PRODUK                               -->
+        <!-- ============================================= -->
+        <div x-show="currentPage === 'produk'">
+
+            <div class="back-bar">
+                <button class="btn btn-back" @click="keToko()">
+                    ← Kembali ke Toko
+                </button>
+                <template x-if="selectedToko">
+                    <span class="toko-info">
+                        🏪 <strong x-text="selectedToko.nama_toko"></strong>
+                        <span x-text="selectedToko.alamat ? '· ' + selectedToko.alamat : ''"></span>
+                    </span>
+                </template>
+            </div>
+
+            <div class="page-header" style="border-bottom: none; padding-bottom:0; margin-bottom:16px;">
+                <h1 style="font-size:24px;">
+                    📦 Daftar Produk
+                    <small x-text="selectedToko ? 'di ' + selectedToko.nama_toko : ''"></small>
+                </h1>
+                <span class="badge-toko" x-text="produkList.length + ' produk'"></span>
+            </div>
+
+            <hr style="border:0; border-top:2px solid #e9edf2; margin: 6px 0 24px 0;">
+
+            <!-- LOADING PRODUK -->
+            <div x-show="loadingProduk" class="state-box">
+                <div class="spinner"></div>
+                <h3>Memuat produk…</h3>
+                <p>Mohon tunggu sebentar.</p>
+            </div>
+
+            <!-- ERROR PRODUK -->
+            <div x-show="errorProduk" class="form-edit alert alert-error" style="max-width:100%;">
+                <p x-text="errorProduk"></p>
+            </div>
+
+            <!-- TIDAK ADA PRODUK -->
+            <div x-show="!loadingProduk && !errorProduk && produkList.length === 0" class="state-box">
+                <div class="icon">🛒</div>
+                <h3>Belum ada produk</h3>
+                <p>Toko ini belum memiliki produk. Tambahkan produk sekarang.</p>
+            </div>
+
+            <!-- DAFTAR PRODUK -->
+            <div x-show="!loadingProduk && produkList.length > 0">
+                <div class="produk-grid">
+                    <template x-for="produk in produkList" :key="produk.id">
+                        <div class="produk-card">
+                            <div class="gambar-wrap">
+                                <img :src="getImageUrl(produk)" :alt="produk.nama_produk"
+                                    @error="$event.target.onerror = null; $event.target.src = defaultImage"
+                                    loading="lazy">
+                            </div>
+
+                            <div class="nama-produk" x-text="produk.nama_produk"></div>
+
+                            <div class="meta">
+                                <div class="row">
+                                    <span class="label-meta">Barcode</span>
+                                    <span class="value-meta" x-text="produk.barcode || '—'"></span>
+                                </div>
+                                <div class="row">
+                                    <span class="label-meta">Harga Beli</span>
+                                    <span class="value-meta">Rp <span
+                                            x-text="Number(produk.harga_beli).toLocaleString('id-ID')"></span></span>
+                                </div>
+                                <div class="row">
+                                    <span class="label-meta">Harga Jual</span>
+                                    <span class="value-meta">Rp <span
+                                            x-text="Number(produk.harga_jual).toLocaleString('id-ID')"></span></span>
+                                </div>
+
+                            </div>
+
+                            <div class="btn-wrap">
+                                <button class="btn btn-primary" @click="keEditProduk(selectedToko.id, produk.id)">
+                                    ✏️ Edit
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- EDIT PRODUK                                  -->
+        <!-- ============================================= -->
+        <div x-show="currentPage === 'editProduk'">
+
+            <div class="back-bar">
+                <button class="btn btn-back" @click="keProduk(selectedToko?.id)">
+                    ← Kembali ke Produk
+                </button>
+                <template x-if="selectedToko">
+                    <span class="toko-info">
+                        🏪 <strong x-text="selectedToko.nama_toko"></strong>
+                        <span x-text="selectedToko.alamat ? '· ' + selectedToko.alamat : ''"></span>
+                    </span>
+                </template>
+            </div>
+
+            <div class="page-header" style="border-bottom: none; padding-bottom:0; margin-bottom:20px;">
+                <h1 style="font-size:24px;">
+                    ✏️ Edit Produk
+                    <small x-text="formEdit.nama_produk ? '– ' + formEdit.nama_produk : ''"></small>
+                </h1>
+            </div>
+
+            <div x-show="errorEdit" class="form-edit alert alert-error"
+                style="max-width:560px; margin:0 auto 20px auto;">
+                <p x-text="errorEdit"></p>
+            </div>
+
+            <div x-show="successEdit" class="form-edit alert alert-success"
+                style="max-width:560px; margin:0 auto 20px auto;">
+                <p x-text="successEdit"></p>
+            </div>
+
+            <form @submit.prevent="simpanEditProduk()" x-show="formEdit.id" class="form-edit">
+
+                <!-- Preview Gambar -->
+                <div class="form-group">
+                    <label>🖼️ Gambar Produk</label>
+                    <div class="preview-wrap">
+                        <template x-if="formEdit.gambarPreview">
+                            <img :src="formEdit.gambarPreview" alt="Preview Baru">
+                        </template>
+                        <template x-if="!formEdit.gambarPreview">
+                            <img :src="formEdit.existingGambar" alt="Gambar Produk"
+                                @error="$event.target.onerror = null; $event.target.src = defaultImage">
+                        </template>
+                    </div>
+                    <label for="gambarInput" style="font-weight:500; font-size:13px; color:#475569; margin-top:4px;">
+                        Ganti Gambar <span class="optional">(opsional)</span>
+                    </label>
+                    <input id="gambarInput" type="file" accept="image/*" @change="onFileChange($event)">
+                </div>
+
+                <div class="form-group">
+                    <label for="nama_produk">Nama Produk <span style="color:#ef4444;">*</span></label>
+                    <input id="nama_produk" type="text" x-model="formEdit.nama_produk" required
+                        placeholder="Nama produk…">
+                </div>
+
+                <div class="form-group">
+                    <label for="barcode">Barcode</label>
+                    <input id="barcode" type="text" x-model="formEdit.barcode" placeholder="Masukkan barcode…">
+                </div>
+
+                <div class="form-group">
+                    <label for="harga_beli">Harga Beli (Rp) <span style="color:#ef4444;">*</span></label>
+                    <input id="harga_beli" type="number" x-model.number="formEdit.harga_beli" required placeholder="0"
+                        min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="harga_jual">Harga Jual (Rp) <span style="color:#ef4444;">*</span></label>
+                    <input id="harga_jual" type="number" x-model.number="formEdit.harga_jual" required placeholder="0"
+                        min="0">
+                </div>
+
+
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-blue" :disabled="loadingEdit">
+                        💾 Simpan Perubahan
+                    </button>
+                    <button type="button" class="btn btn-outline" @click="keProduk(selectedToko?.id)">
+                        Batal
+                    </button>
+                </div>
+
+            </form>
+
+            <div x-show="!formEdit.id && !loadingEdit" class="state-box" style="margin-top:24px;">
+                <div class="icon">⚠️</div>
+                <h3>Produk tidak ditemukan</h3>
+                <p>Data produk tidak tersedia atau telah dihapus.</p>
+                <button class="btn btn-primary" @click="keProduk(selectedToko?.id)" style="margin-top:16px;">
+                    Kembali ke Produk
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ============================================= -->
+        <!-- 404                                          -->
+        <!-- ============================================= -->
+        <div x-show="currentPage === '404'" class="state-box" style="padding:80px 20px;">
+            <div class="icon">🔍</div>
+            <h1 style="font-size:48px; font-weight:800; color:#0f172a;">404</h1>
+            <h3 style="margin-top:4px;">Halaman tidak ditemukan</h3>
+            <p style="margin-top:4px;">Halaman yang Anda cari tidak tersedia.</p>
+            <button class="btn btn-blue" @click="keToko()" style="margin-top:20px;">
+                Kembali ke Toko
+            </button>
+        </div>
+
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
